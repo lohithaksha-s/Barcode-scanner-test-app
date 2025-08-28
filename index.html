@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beef Detector Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 15px;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 30px rgba(0,0,0,0.2);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            padding: 20px 0;
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+            border-radius: 15px;
+            margin: -15px -15px 25px -15px;
+        }
+
+        .header h1 {
+            font-size: 26px;
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .camera-section {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 3px solid #e2e8f0;
+            position: relative;
+        }
+
+        .camera-container {
+            position: relative;
+            width: 100%;
+            height: 280px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .viewfinder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 250px;
+            height: 120px;
+            border: 3px solid #10b981;
+            border-radius: 12px;
+            z-index: 10;
+        }
+
+        .viewfinder::before,
+        .viewfinder::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #10b981;
+        }
+
+        .viewfinder::before {
+            top: -3px;
+            left: -3px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .viewfinder::after {
+            bottom: -3px;
+            right: -3px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #10b981, transparent);
+            animation: scan-animation 2s linear infinite;
+        }
+
+        @keyframes scan-animation {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(120px); }
+        }
+
+        .camera-status {
+            text-align: center;
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+
+        .camera-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 18px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-start {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-start:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-stop {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-stop:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .manual-section {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #cbd5e0;
+        }
+
+        .manual-section h3 {
+            margin-bottom: 15px;
+            color: #1e293b;
+            font-size: 18px;
+        }
+
+        .manual-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .manual-input input {
+            flex: 1;
+            padding: 14px 16px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .manual-input input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-check:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .result {
+            padding: 25px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            border: 3px solid transparent;
+        }
+
+        .result.safe {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            color: #065f46;
+            border-color: #10b981;
+        }
+
+        .result.unsafe {
+            background: linear-gradient(135deg, #fecaca, #fca5a5);
+            color: #7f1d1d;
+            border-color: #ef4444;
+        }
+
+        .result.loading {
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+            color: #1e3a8a;
+            border-color: #3b82f6;
+        }
+
+        .result.error {
+            background: linear-gradient(135deg, #fed7aa, #fdba74);
+            color: #7c2d12;
+            border-color: #f97316;
+        }
+
+        .loading-spinner {
+            width: 32px;
+            height: 32px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid currentColor;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .ingredients-box {
+            background: rgba(255,255,255,0.9);
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: left;
+            font-size: 14px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .ingredients-box h4 {
+            margin-bottom: 10px;
+            color: #374151;
+        }
+
+        .beef-found {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            margin: 2px;
+            display: inline-block;
+        }
+
+        .troubleshooting {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 15px;
+        }
+
+        .troubleshooting h4 {
+            color: #92400e;
+            margin-bottom: 12px;
+        }
+
+        .troubleshooting ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .troubleshooting li {
+            color: #78350f;
+            margin: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .troubleshooting li::before {
+            content: "⚠️";
+            position: absolute;
+            left: 0;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .camera-container {
+                height: 240px;
+            }
+            
+            .viewfinder {
+                width: 200px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🥩 Beef Detector Pro</h1>
+            <p>Scan barcodes • Detect beef ingredients • Stay informed</p>
+        </div>
+
+        <div class="camera-section">
+            <div class="camera-container">
+                <video id="cameraVideo" autoplay playsinline muted></video>
+                <div class="viewfinder">
+                    <div class="scan-line"></div>
+                </div>
+            </div>
+            <div class="camera-status" id="cameraStatus">Camera ready</div>
+            <div class="camera-controls">
+                <button id="startCamera" class="btn btn-start">Start Scan</button>
+                <button id="stopCamera" class="btn btn-stop" disabled>Stop Scan</button>
+            </div>
+        </div>
+
+        <div class="manual-section">
+            <h3>📝 Manual Entry</h3>
+            <div class="manual-input">
+                <input type="text" id="manualBarcode" placeholder="Enter barcode number..." maxlength="20">
+                <button id="checkManual" class="btn-check">Check</button>
+            </div>
+        </div>
+
+        <div id="result" class="camera-status">
+            Ready to scan! Point camera at a barcode or enter manually above.
+        </div>
+    </div>
+
+    <script>
+        class BeefDetectorPro {
+            constructor() {
+                this.isScanning = false;
+                this.stream = null;
+                this.lastScanTime = 0;
+                
+                this.beefKeywords = [
+                    // English
+                    'beef', 'bovine', 'cattle', 'cow', 'bull', 'steer', 'veal',
+                    'beef extract', 'beef fat', 'beef tallow', 'beef stock', 
+                    'beef broth', 'beef gelatin', 'beef protein',
+                    // Japanese
+                    '牛肉', '牛', 'ビーフ', '牛脂', '牛エキス', '牛骨', '牛由来',
+                    '和牛', '黒毛和牛', '牛すじ', '牛ひき肉', '牛バラ', '牛もも',
+                    // Other languages
+                    'boeuf', 'rind', 'manzo', 'carne de res'
+                ];
+                
+                this.init();
+            }
+
+            init() {
+                this.setupEventListeners();
+                this.checkBrowserSupport();
+            }
+
+            setupEventListeners() {
+                document.getElementById('startCamera').addEventListener('click', () => this.startCamera());
+                document.getElementById('stopCamera').addEventListener('click', () => this.stopCamera());
+                document.getElementById('checkManual').addEventListener('click', () => this.checkManualBarcode());
+                
+                document.getElementById('manualBarcode').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.checkManualBarcode();
+                });
+
+                document.getElementById('manualBarcode').addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '');
+                });
+            }
+
+            checkBrowserSupport() {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    this.showResult('❌ Camera not supported in this browser. Please use Chrome, Firefox, or Safari.', 'error');
+                    document.getElementById('startCamera').disabled = true;
+                    return false;
+                }
+                
+                if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+                    this.showResult('⚠️ Camera requires HTTPS. Please use a secure connection.', 'error');
+                    this.showTroubleshooting();
+                    return false;
+                }
+                
+                return true;
+            }
+
+            async startCamera() {
+                if (!this.checkBrowserSupport()) return;
+
+                try {
+                    this.updateStatus('🔄 Starting camera...');
+                    this.showResult('Starting camera...', 'loading');
+
+                    // Stop existing stream
+                    if (this.stream) {
+                        this.stopCamera();
+                    }
+
+                    // Try different camera configurations
+                    const constraints = [
+                        { video: { facingMode: { exact: 'environment' }, width: { ideal: 640 }, height: { ideal: 480 } } },
+                        { video: { facingMode: 'environment', width: { ideal: 640 }, height: { ideal: 480 } } },
+                        { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } } },
+                        { video: { width: { ideal: 640 }, height: { ideal: 480 } } },
+                        { video: true }
+                    ];
+
+                    let stream = null;
+                    for (const constraint of constraints) {
+                        try {
+                            stream = await navigator.mediaDevices.getUserMedia(constraint);
+                            console.log('Camera started with constraint:', constraint);
+                            break;
+                        } catch (e) {
+                            console.log('Failed constraint:', constraint, e.message);
+                        }
+                    }
+
+                    if (!stream) {
+                        throw new Error('Could not access camera with any configuration');
+                    }
+
+                    this.stream = stream;
+                    const video = document.getElementById('cameraVideo');
+                    video.srcObject = stream;
+                    
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = resolve;
+                    });
+
+                    await video.play();
+
+                    // Initialize Quagga
+                    await this.initializeQuagga(video);
+
+                    this.isScanning = true;
+                    document.getElementById('startCamera').disabled = true;
+                    document.getElementById('stopCamera').disabled = false;
+                    this.updateStatus('📷 Scanning active - point at barcode');
+                    this.showResult('📱 Camera active! Point at a barcode to scan', 'loading');
+
+                } catch (error) {
+                    console.error('Camera error:', error);
+                    this.showResult(`❌ Camera Error: ${error.message}`, 'error');
+                    this.showTroubleshooting();
+                    this.updateStatus('❌ Camera failed');
+                }
+            }
+
+            initializeQuagga(videoElement) {
+                return new Promise((resolve, reject) => {
+                    Quagga.init({
+                        inputStream: {
+                            name: "Live",
+                            type: "LiveStream",
+                            target: videoElement,
+                            constraints: {
+                                width: { min: 320, max: 800 },
+                                height: { min: 240, max: 600 }
+                            }
+                        },
+                        decoder: {
+                            readers: [
+                                "code_128_reader",
+                                "ean_reader", 
+                                "ean_8_reader",
+                                "code_39_reader",
+                                "codabar_reader"
+                            ]
+                        },
+                        locate: true,
+                        locator: {
+                            patchSize: "medium",
+                            halfSample: true
+                        }
+                    }, (err) => {
+                        if (err) {
+                            reject(err);
+                            return;
+                        }
+                        
+                        Quagga.start();
+                        
+                        Quagga.onDetected((result) => {
+                            const now = Date.now();
+                            if (now - this.lastScanTime < 3000) return; // Prevent duplicate scans
+                            
+                            this.lastScanTime = now;
+                            const code = result.codeResult.code;
+                            
+                            if (code && code.length >= 8) {
+                                console.log('Barcode detected:', code);
+                                this.checkProduct(code);
+                            }
+                        });
+                        
+                        resolve();
+                    });
+                });
+            }
+
+            stopCamera() {
+                if (this.isScanning) {
+                    try {
+                        Quagga.stop();
+                    } catch (e) {
+                        console.log('Quagga stop error:', e);
+                    }
+                    this.isScanning = false;
+                }
+
+                if (this.stream) {
+                    this.stream.getTracks().forEach(track => track.stop());
+                    this.stream = null;
+                }
+
+                const video = document.getElementById('cameraVideo');
+                video.srcObject = null;
+
+                document.getElementById('startCamera').disabled = false;
+                document.getElementById('stopCamera').disabled = true;
+                this.updateStatus('📷 Camera stopped');
+                this.showResult('Camera stopped. Click "Start Scan" to resume.', 'error');
+            }
+
+            checkManualBarcode() {
+                const barcode = document.getElementById('manualBarcode').value.trim();
+                if (!barcode) {
+                    this.showResult('⚠️ Please enter a barcode number', 'error');
+                    return;
+                }
+                
+                if (barcode.length < 8) {
+                    this.showResult('⚠️ Barcode should be at least 8 digits', 'error');
+                    return;
+                }
+
+                this.checkProduct(barcode);
+            }
+
+            async checkProduct(barcode) {
+                this.showResult(`🔍 Checking barcode: ${barcode}`, 'loading');
+                this.updateStatus('🔍 Looking up product...');
+
+                try {
+                    // Try Open Food Facts API
+                    const response = await fetch(`https://world.openfoodfacts.org/api/v0/product/${barcode}.json`, {
+                        method: 'GET',
+                        headers: {
+                            'User-Agent': 'BeefDetector/1.0'
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`API error: ${response.status}`);
+                    }
+
+                    const data = await response.json();
+
+                    if (data.status === 1 && data.product) {
+                        this.analyzeProduct(data.product, barcode);
+                    } else {
+                        this.showProductNotFound(barcode);
+                    }
+
+                } catch (error) {
+                    console.error('API Error:', error);
+                    this.showProductNotFound(barcode);
+                }
+            }
+
+            analyzeProduct(product, barcode) {
+                const productName = product.product_name || product.product_name_en || 'Unknown Product';
+                const ingredients = (product.ingredients_text || product.ingredients_text_en || '').toLowerCase();
+                
+                const beefFound = this.findBeefIngredients(ingredients);
+                const hasBeef = beefFound.length > 0;
+
+                let resultHtml = `<strong>${productName}</strong><br><small>Barcode: ${barcode}</small><br><br>`;
+
+                if (hasBeef) {
+                    resultHtml += `❌ <strong style="font-size: 20px;">CONTAINS BEEF</strong>`;
+                    
+                    if (beefFound.length > 0) {
+                        resultHtml += `<div class="ingredients-box">
+                            <h4>🚫 Beef ingredients found:</h4>`;
+                        beefFound.forEach(ingredient => {
+                            resultHtml += `<span class="beef-found">${ingredient}</span> `;
+                        });
+                        resultHtml += `</div>`;
+                    }
+                    
+                    this.showResult(resultHtml, 'unsafe');
+                    this.updateStatus('❌ Beef detected!');
+                } else {
+                    resultHtml += `✅ <strong style="font-size: 20px;">NO BEEF DETECTED</strong>`;
+                    
+                    if (ingredients.trim()) {
+                        resultHtml += `<div class="ingredients-box">
+                            <h4>📋 Ingredients:</h4>
+                            <p style="font-size: 13px; line-height: 1.4;">${ingredients.substring(0, 300)}${ingredients.length > 300 ? '...' : ''}</p>
+                        </div>`;
+                    }
+                    
+                    this.showResult(resultHtml, 'safe');
+                    this.updateStatus('✅ No beef found');
+                }
+
+                // Clear manual input
+                document.getElementById('manualBarcode').value = '';
+            }
+
+            findBeefIngredients(text) {
+                if (!text) return [];
+                
+                return this.beefKeywords.filter(keyword => 
+                    text.includes(keyword.toLowerCase())
+                );
+            }
+
+            showProductNotFound(barcode) {
+                const resultHtml = `
+                    <strong>Product Not Found</strong><br>
+                    <small>Barcode: ${barcode}</small><br><br>
+                    ⚠️ <strong>PRODUCT NOT IN DATABASE</strong><br>
+                    <small>Please check ingredients manually on the product packaging.</small>
+                `;
+                this.showResult(resultHtml, 'error');
+                this.updateStatus('⚠️ Product not found');
+            }
+
+            showResult(html, type) {
+                const result = document.getElementById('result');
+                result.className = `result ${type}`;
+                result.innerHTML = html;
+            }
+
+            updateStatus(text) {
+                document.getElementById('cameraStatus').textContent = text;
+            }
+
+            showTroubleshooting() {
+                const troubleshooting = `
+                    <div class="troubleshooting">
+                        <h4>🔧 Camera Troubleshooting</h4>
+                        <ul>
+                            <li>Make sure you're using <strong>HTTPS</strong> or localhost</li>
+                            <li>Click "Allow" when prompted for camera permission</li>
+                            <li>Close other apps that might be using the camera</li>
+                            <li>Try Chrome, Firefox, or Safari browsers</li>
+                            <li>On mobile: Check browser camera permissions in settings</li>
+                            <li>Use manual barcode entry as backup</li>
+                        </ul>
+                    </div>
+                `;
+                document.getElementById('result').innerHTML += troubleshooting;
+            }
+        }
+
+        // Start the app when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new BeefDetectorPro();
+        });
+    </script>
+</body>
+</html>
