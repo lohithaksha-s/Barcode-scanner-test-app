@@ -415,7 +415,7 @@
     <div class="container">
         <div class="header">
             <h1>🐄 Holy Cow!</h1>
-            <p>Sacred Scanner • Divine Detection • Karma Protection</p>
+            <p>Sacred Scanner • Beef Detector • Karma Protection</p>
         </div>
 
         <div class="camera-section">
@@ -425,23 +425,23 @@
                     <div class="scan-line"></div>
                 </div>
             </div>
-            <div class="camera-status" id="cameraStatus">Divine scanner ready</div>
+            <div class="camera-status" id="cameraStatus">Beef scanner ready</div>
             <div class="camera-controls">
-                <button id="startCamera" class="btn btn-start">Start Divine Scan</button>
+                <button id="startCamera" class="btn btn-start">Start Scan</button>
                 <button id="stopCamera" class="btn btn-stop" disabled>Stop Scan</button>
             </div>
         </div>
 
         <div class="manual-section">
-            <h3>📝 Manual Sacred Entry</h3>
+            <h3>📝 Manual Barcode Entry</h3>
             <div class="manual-input">
                 <input type="text" id="manualBarcode" placeholder="Enter barcode for divine judgment..." maxlength="20">
-                <button id="checkManual" class="btn-check">Judge</button>
+                <button id="checkManual" class="btn-check">Detect</button>
             </div>
         </div>
 
         <div id="result" class="camera-status">
-            Ready for divine scanning! Point camera at barcode or enter manually above.
+            Ready for beef scanning! Point camera at barcode or enter manually above.
         </div>
     </div>
 
@@ -523,7 +523,7 @@
 
                 try {
                     this.updateStatus('🔄 Awakening divine camera...');
-                    this.showResult('Summoning divine scanner...', 'loading');
+                    this.showResult('Summoning beef scanner...', 'loading');
 
                     if (this.stream) {
                         this.stopCamera();
@@ -566,7 +566,7 @@
                     this.isScanning = true;
                     document.getElementById('startCamera').disabled = true;
                     document.getElementById('stopCamera').disabled = false;
-                    this.updateStatus('🐄 Divine scanner active - seek the sacred codes');
+                    this.updateStatus('🐄 Beef scanner active - seek the sacred codes');
                     this.showResult('📱 Holy scanner active! Point at a barcode for divine judgment', 'loading');
 
                 } catch (error) {
@@ -649,14 +649,14 @@
 
                 document.getElementById('startCamera').disabled = false;
                 document.getElementById('stopCamera').disabled = true;
-                this.updateStatus('📷 Divine scanner resting');
-                this.showResult('Scanner blessed into rest. Click "Start Divine Scan" to resume.', 'error');
+                this.updateStatus('📷 Beef scanner resting');
+                this.showResult('Scanner blessed into rest. Click "Start Beef Scan" to resume.', 'error');
             }
 
             checkManualBarcode() {
                 const barcode = document.getElementById('manualBarcode').value.trim();
                 if (!barcode) {
-                    this.showResult('⚠️ Please offer a barcode to the divine scanner', 'error');
+                    this.showResult('⚠️ Please offer a barcode to the beef scanner', 'error');
                     return;
                 }
                 
@@ -835,7 +835,7 @@
             }
         }
 
-        // Awaken the divine scanner when the sacred page loads
+        // Awaken the beef scanner when the sacred page loads
         document.addEventListener('DOMContentLoaded', () => {
             new HolyCowScanner();
         });
